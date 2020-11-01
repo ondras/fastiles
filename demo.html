@@ -6,6 +6,9 @@
 	</head>
 	<body>
 <script type="module">
+window.addEventListener("error", e => console.warn(e));
+window.addEventListener("unhandledrejection ", e => console.warn(e));
+
 import { Scene, Palette } from "./js/fastiles.js";
 
 let size = [16, 16];
@@ -22,6 +25,10 @@ for (let j=0;j<size[1];j++) {
 		s.draw([i, j], j*16+i, j*16+i, 0);
 	}
 }
+
+window.s = s;
+window.Scene = Scene;
+window.Palette = Palette;
 </script>
 	</body>
 </html>

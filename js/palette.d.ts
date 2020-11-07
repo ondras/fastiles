@@ -8,6 +8,7 @@ export default class Palette {
     static default(): Palette;
     static windows16(): Palette;
     static xterm256(): Palette;
+    static rexpaint(): Palette;
     static fromArray(data: string[]): Palette;
     constructor();
     set scene(scene: Scene | null);

@@ -18,7 +18,7 @@ export default class Scene {
     constructor(options: Options);
     get node(): HTMLCanvasElement;
     setSize(size: Vec2, tileSize: Vec2): void;
-    set font(url: string);
+    set font(font: string | HTMLImageElement);
     set palette(palette: Palette);
     get palette(): Palette;
     draw(position: Vec2, glyph: number, fg: number, bg: number): void;

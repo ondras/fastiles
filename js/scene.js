@@ -30,17 +30,29 @@ export default class Scene {
         this._createGeometry(size);
         this._createData(size[0] * size[1]);
     }
-    set font(url) {
+    set font(font) {
         const gl = this._gl;
-        let img = new Image();
-        img.crossOrigin = "anonymous";
-        img.src = url;
-        img.onload = _ => {
+        let img;
+        let onload = () => {
             gl.activeTexture(gl.TEXTURE0);
             gl.bindTexture(gl.TEXTURE_2D, this._textures["font"]);
             gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, img);
             this._requestDraw();
         };
+        if (typeof (font) == "string") {
+            img = new Image();
+            img.crossOrigin = "anonymous";
+            img.src = font;
+            img.onload = onload;
+        }
+        else if (font.complete) {
+            img = font;
+            onload();
+        }
+        else {
+            img = font;
+            img.onload = onload;
+        }
     }
     set palette(palette) {
         if (this._palette) {

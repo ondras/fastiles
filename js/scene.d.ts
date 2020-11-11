@@ -18,7 +18,7 @@ export default class Scene {
     constructor(options: Options);
     get node(): HTMLCanvasElement;
     setSize(size: Vec2, tileSize: Vec2): void;
-    set font(font: string | HTMLImageElement);
+    set font(font: string | HTMLImageElement | HTMLCanvasElement);
     set palette(palette: Palette);
     get palette(): Palette;
     draw(position: Vec2, glyph: number, fg: number, bg: number): void;
@@ -28,5 +28,6 @@ export default class Scene {
     private _createData;
     private _requestDraw;
     private _draw;
+    private _uploadFont;
 }
 export {};

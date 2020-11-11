@@ -31,27 +31,19 @@ export default class Scene {
         this._createData(size[0] * size[1]);
     }
     set font(font) {
-        const gl = this._gl;
-        let img;
-        let onload = () => {
-            gl.activeTexture(gl.TEXTURE0);
-            gl.bindTexture(gl.TEXTURE_2D, this._textures["font"]);
-            gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, img);
-            this._requestDraw();
-        };
-        if (typeof (font) == "string") {
-            img = new Image();
-            img.crossOrigin = "anonymous";
-            img.src = font;
-            img.onload = onload;
-        }
-        else if (font.complete) {
-            img = font;
-            onload();
-        }
-        else {
-            img = font;
-            img.onload = onload;
+        switch (true) {
+            case font instanceof HTMLImageElement:
+                ensureImageComplete(font).then(img => this._uploadFont(img));
+                break;
+            case font instanceof HTMLCanvasElement:
+                this._uploadFont(font);
+                break;
+            default:
+                let img = new Image();
+                img.src = font;
+                img.crossOrigin = "anonymous";
+                ensureImageComplete(img).then(img => this._uploadFont(img));
+                break;
         }
     }
     set palette(palette) {
@@ -144,6 +136,13 @@ export default class Scene {
         gl.bufferData(gl.ARRAY_BUFFER, this._data.style, gl.DYNAMIC_DRAW);
         gl.drawArrays(gl.TRIANGLES, 0, this._size[0] * this._size[1] * VERTICES_PER_TILE);
     }
+    _uploadFont(pixels) {
+        const gl = this._gl;
+        gl.activeTexture(gl.TEXTURE0);
+        gl.bindTexture(gl.TEXTURE_2D, this._textures["font"]);
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, pixels);
+        this._requestDraw();
+    }
 }
 function createGeometry(gl, attribs, size) {
     let tileCount = size[0] * size[1];
@@ -168,4 +167,12 @@ function createGeometry(gl, attribs, size) {
     gl.vertexAttribIPointer(attribs["uv"], 2, gl.UNSIGNED_BYTE, 0, 0);
     gl.bufferData(gl.ARRAY_BUFFER, uvData, gl.STATIC_DRAW);
     return { position, uv };
+}
+async function ensureImageComplete(img) {
+    if (img.complete) {
+        return img;
+    }
+    return new Promise(resolve => {
+        img.addEventListener("load", _ => resolve(img));
+    });
 }

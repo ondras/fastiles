@@ -11,6 +11,7 @@ export default class Palette {
 	static windows16() { return this.fromArray(WINDOWS_16); }
 	static xterm256() { return this.fromArray(XTERM_256); }
 	static rexpaint() { return this.fromArray(REXPAINT); }
+	static rexpaint8() { return this.fromArray(REXPAINT_8); }
 
 	static fromArray(data: string[]) {
 		let p = new this();
@@ -67,3 +68,11 @@ const REXPAINT = [
 	[  0, 64, 64], [  0,102,102], [  0,140,140], [  0,178,178], [  0,217,217], [  0,255,255], [ 51,255,255], [102,255,255], [ 26, 20, 13], [ 51, 41, 26], [ 77, 61, 38], [102, 82, 51], [128,102, 64], [158,134,100], [191,171,143], [222,211,195],
 	[  0, 48, 64], [  0, 77,102], [  0,105,140], [  0,134,178], [  0,163,217], [  0,191,255], [ 51,204,255], [102,217,255], [  0,  0,  0], [  0,  0,  0], [  0,  0,  0], [  0,  0,  0], [255,255,255], [255,255,255], [255,255,255], [255,255,255],
 ].map(color => `rgb(${color.join(",")})`);
+
+const REXPAINT_8 = REXPAINT.map((_, index, all) => {
+	let remainder = index % 8;
+	let set = index >> 3;
+
+	set = (index < 96 ? 2*set : (set-12)*2+1);
+	return all[8*set + remainder];
+});

@@ -1,13 +1,14 @@
 import Palette from "./palette.js";
 declare type Vec2 = [number, number];
 export interface Options {
-    size: Vec2;
+    tileCount: Vec2;
     tileSize: Vec2;
-    font: string;
+    font: TexImageSource;
+    palette: Palette;
 }
 export default class Scene {
     private _gl;
-    private _size;
+    private _tileCount;
     private _palette;
     private _data;
     private _buffers;
@@ -15,12 +16,11 @@ export default class Scene {
     private _attribs;
     private _uniforms;
     private _drawRequested;
-    constructor(options: Options);
+    constructor(options: Options, palette?: Palette);
     get node(): HTMLCanvasElement;
-    setSize(size: Vec2, tileSize: Vec2): void;
-    set font(font: string | HTMLImageElement | HTMLCanvasElement);
-    set palette(palette: Palette);
+    configure(options: Partial<Options>): void;
     get palette(): Palette;
+    set palette(palette: Palette);
     draw(position: Vec2, glyph: number, fg: number, bg: number): void;
     uploadPaletteData(data: HTMLCanvasElement): void;
     private _initGL;

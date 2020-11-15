@@ -8,14 +8,15 @@ type Vec2 = [number, number];
 const VERTICES_PER_TILE = 6;
 
 export interface Options {
-	size: Vec2;
+	tileCount: Vec2;
 	tileSize: Vec2;
-	font: string;
+	font: TexImageSource;
+	palette: Palette
 }
 
 export default class Scene {
 	private _gl: GL;
-	private _size!: Vec2;
+	private _tileCount!: Vec2;
 	private _palette!: Palette;
 	private _data = {
 		glyph: new Uint16Array(),
@@ -35,62 +36,49 @@ export default class Scene {
 	private _uniforms: Record<string, WebGLUniformLocation> = {};
 	private _drawRequested: boolean = false;
 
-	constructor(options: Options) {
+	constructor(options: Options, palette = Palette.default()) {
 		this._gl = this._initGL();
-
-		this.setSize(options.size, options.tileSize);
-		this.font = options.font;
-		this.palette = Palette.default();
+		this.configure(options);
+		this.palette = palette;
 	}
 
 	get node() { return this._gl.canvas as HTMLCanvasElement; }
 
-	setSize(size: Vec2, tileSize: Vec2) {
+	configure(options: Partial<Options>) {
 		const gl = this._gl;
 		const uniforms = this._uniforms;
 
-		this._size = size;
+		if (options.tileCount || options.tileSize) { // resize
+			const node = this.node;
 
-		this.node.width = size[0] * tileSize[0];
-		this.node.height = size[1] * tileSize[1];
-		gl.viewport(0, 0, this.node.width, this.node.height);
+			let tileSize = options.tileSize || [node.width / this._tileCount[0], node.height / this._tileCount[1]];
+			let tileCount = options.tileCount || this._tileCount;
 
-		gl.uniform2ui(uniforms["viewportSize"], this.node.width, this.node.height);
-		gl.uniform2uiv(uniforms["tileSize"], tileSize);
-
-		this._createGeometry(size);
-		this._createData(size[0]*size[1]);
-	}
-
-	set font(font: string | HTMLImageElement | HTMLCanvasElement) {
-		switch (true) {
-			case font instanceof HTMLImageElement:
-				ensureImageComplete(font as HTMLImageElement).then(img => this._uploadFont(img));
-			break;
-
-			case font instanceof HTMLCanvasElement:
-				this._uploadFont(font as HTMLCanvasElement);
-			break;
-
-			default:
-				let img = new Image();
-				img.src = font as string;
-				img.crossOrigin = "anonymous";
-				ensureImageComplete(img).then(img => this._uploadFont(img));
-			break;
+			node.width = tileCount[0] * tileSize[0];
+			node.height = tileCount[1] * tileSize[1];
+			gl.viewport(0, 0, node.width, node.height);
+			gl.uniform2ui(uniforms["viewportSize"], node.width, node.height);
 		}
+
+		if (options.tileCount) { // re-create data buffers
+			this._tileCount = options.tileCount;
+			this._createGeometry(this._tileCount);
+			this._createData(this._tileCount[0]*this._tileCount[1]);
+		}
+
+		options.tileSize && gl.uniform2uiv(uniforms["tileSize"], options.tileSize);
+		options.font && this._uploadFont(options.font);
 	}
 
+	get palette() { return this._palette; }
 	set palette(palette: Palette) {
 		if (this._palette) { this._palette.scene = null; }
 		this._palette = palette;
 		this._palette.scene = this;
 	}
 
-	get palette() { return this._palette; }
-
 	draw(position: Vec2, glyph: number, fg: number, bg: number) {
-		let index = position[1] * this._size[0] + position[0];
+		let index = position[1] * this._tileCount[0] + position[0];
 		index *= VERTICES_PER_TILE;
 
 		this._data.glyph[index + 2] = glyph;
@@ -192,10 +180,10 @@ export default class Scene {
 		gl.bindBuffer(gl.ARRAY_BUFFER, this._buffers.style!);
 		gl.bufferData(gl.ARRAY_BUFFER, this._data.style, gl.DYNAMIC_DRAW);
 
-		gl.drawArrays(gl.TRIANGLES, 0, this._size[0]*this._size[1]*VERTICES_PER_TILE);
+		gl.drawArrays(gl.TRIANGLES, 0, this._tileCount[0]*this._tileCount[1]*VERTICES_PER_TILE);
 	}
 
-	private _uploadFont(pixels: HTMLImageElement | HTMLCanvasElement) {
+	private _uploadFont(pixels: TexImageSource) {
 		const gl = this._gl;
 
 		gl.activeTexture(gl.TEXTURE0);
@@ -232,12 +220,4 @@ function createGeometry(gl: GL, attribs: Record<string, number>, size: Vec2) {
 	gl.bufferData(gl.ARRAY_BUFFER, uvData, gl.STATIC_DRAW);
 
 	return {position, uv};
-}
-
-async function ensureImageComplete(img: HTMLImageElement): Promise<HTMLImageElement> {
-	if (img.complete) { return img; }
-
-	return new Promise(resolve => {
-		img.addEventListener("load", _ => resolve(img));
-	});
 }

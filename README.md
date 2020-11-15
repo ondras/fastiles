@@ -28,9 +28,9 @@ Glyphs rendered via *fastiles* are using indexed colors. Foreground and backgrou
 import { Scene, Palette } from "./fastiles/fastiles.js";
 
 let options = {
-	size: [80, 25],     // tiles
+	tileCount: [80, 25],     // tiles
 	tileSize: [12, 12],
-	font: "..."         // CORS-enabled URL
+	font: ...                // image or canvas
 }
 let scene = new Scene(options)
 document.body.appendChild(scene.node)

@@ -4,7 +4,6 @@ export interface Options {
     tileCount: Vec2;
     tileSize: Vec2;
     font: TexImageSource;
-    palette: Palette;
 }
 export default class Scene {
     private _gl;

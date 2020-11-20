@@ -11,6 +11,7 @@ export interface Options {
 	tileCount: Vec2;
 	tileSize: Vec2;
 	font: TexImageSource;
+	render: boolean;
 }
 
 export default class Scene {
@@ -34,6 +35,7 @@ export default class Scene {
 	private _attribs: Record<string, number> = {};
 	private _uniforms: Record<string, WebGLUniformLocation> = {};
 	private _drawRequested: boolean = false;
+	private _externalRender: boolean = false;
 
 	constructor(options: Options, palette = Palette.default()) {
 		this._gl = this._initGL();
@@ -47,6 +49,7 @@ export default class Scene {
 		const gl = this._gl;
 		const uniforms = this._uniforms;
 
+		this._externalRender = (options.render === false);
 		if (options.tileCount || options.tileSize) { // resize
 			const node = this.node;
 
@@ -86,7 +89,7 @@ export default class Scene {
 		this._data.style[index+2] = (bg << 16) + fg;
 		this._data.style[index+5] = (bg << 16) + fg;
 
-		this._requestDraw();
+		this._requestRender();
 	}
 
 	uploadPaletteData(data: HTMLCanvasElement) {
@@ -95,7 +98,7 @@ export default class Scene {
 		gl.bindTexture(gl.TEXTURE_2D, this._textures["palette"]);
 		gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, data);
 
-		this._requestDraw();
+		this._requestRender();
 	}
 
 	private _initGL() {
@@ -161,15 +164,18 @@ export default class Scene {
 		Object.assign(this._buffers, {glyph, style});
 	}
 
-	private _requestDraw() {
+	private _requestRender() {
 		if (this._drawRequested) { return; }
 		this._drawRequested = true;
-		requestAnimationFrame(() => this._draw());
+		if (!this._externalRender) {
+			requestAnimationFrame(() => this.render());
+		}
 	}
 
-	private _draw() {
+	render() {
 		const gl = this._gl;
 
+		if (!this._drawRequested) { return false; }
 		this._drawRequested = false;
 
 		gl.bindBuffer(gl.ARRAY_BUFFER, this._buffers.glyph!);
@@ -179,6 +185,7 @@ export default class Scene {
 		gl.bufferData(gl.ARRAY_BUFFER, this._data.style, gl.DYNAMIC_DRAW);
 
 		gl.drawArrays(gl.TRIANGLES, 0, this._tileCount[0]*this._tileCount[1]*VERTICES_PER_TILE);
+		return true;
 	}
 
 	private _uploadFont(pixels: TexImageSource) {
@@ -187,7 +194,7 @@ export default class Scene {
 		gl.activeTexture(gl.TEXTURE0);
 		gl.bindTexture(gl.TEXTURE_2D, this._textures["font"]);
 		gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, pixels);
-		this._requestDraw();
+		this._requestRender();
 	}
 }
 

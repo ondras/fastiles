@@ -6,7 +6,8 @@ export default class Scene {
     constructor(options, palette = Palette.default()) {
         this._data = {
             glyph: new Uint16Array(),
-            style: new Uint16Array()
+            fg: new Uint16Array(),
+            bg: new Uint16Array()
         };
         this._buffers = {};
         this._attribs = {};
@@ -50,9 +51,10 @@ export default class Scene {
         index *= VERTICES_PER_TILE;
         this._data.glyph[index + 2] = glyph;
         this._data.glyph[index + 5] = glyph;
-        let style = (bg << 8) + fg;
-        this._data.style[index + 2] = style;
-        this._data.style[index + 5] = style;
+        this._data.fg[index + 2] = fg;
+        this._data.fg[index + 5] = fg;
+        this._data.bg[index + 2] = bg;
+        this._data.bg[index + 5] = bg;
         this._requestDraw();
     }
     uploadPaletteData(data) {
@@ -100,16 +102,21 @@ export default class Scene {
         const gl = this._gl;
         const attribs = this._attribs;
         this._buffers.glyph && gl.deleteBuffer(this._buffers.glyph);
-        this._buffers.style && gl.deleteBuffer(this._buffers.style);
+        this._buffers.fg && gl.deleteBuffer(this._buffers.fg);
+        this._buffers.bg && gl.deleteBuffer(this._buffers.bg);
         this._data.glyph = new Uint16Array(tileCount * VERTICES_PER_TILE);
-        this._data.style = new Uint16Array(tileCount * VERTICES_PER_TILE);
+        this._data.fg = new Uint16Array(tileCount * VERTICES_PER_TILE);
+        this._data.bg = new Uint16Array(tileCount * VERTICES_PER_TILE);
         const glyph = gl.createBuffer();
         gl.bindBuffer(gl.ARRAY_BUFFER, glyph);
         gl.vertexAttribIPointer(attribs["glyph"], 1, gl.UNSIGNED_SHORT, 0, 0);
-        const style = gl.createBuffer();
-        gl.bindBuffer(gl.ARRAY_BUFFER, style);
-        gl.vertexAttribIPointer(attribs["style"], 1, gl.UNSIGNED_SHORT, 0, 0);
-        Object.assign(this._buffers, { glyph, style });
+        const fg = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, fg);
+        gl.vertexAttribIPointer(attribs["fg"], 1, gl.UNSIGNED_SHORT, 0, 0);
+        const bg = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, bg);
+        gl.vertexAttribIPointer(attribs["bg"], 1, gl.UNSIGNED_SHORT, 0, 0);
+        Object.assign(this._buffers, { glyph, fg, bg });
     }
     _requestDraw() {
         if (this._drawRequested) {
@@ -123,8 +130,10 @@ export default class Scene {
         this._drawRequested = false;
         gl.bindBuffer(gl.ARRAY_BUFFER, this._buffers.glyph);
         gl.bufferData(gl.ARRAY_BUFFER, this._data.glyph, gl.DYNAMIC_DRAW);
-        gl.bindBuffer(gl.ARRAY_BUFFER, this._buffers.style);
-        gl.bufferData(gl.ARRAY_BUFFER, this._data.style, gl.DYNAMIC_DRAW);
+        gl.bindBuffer(gl.ARRAY_BUFFER, this._buffers.fg);
+        gl.bufferData(gl.ARRAY_BUFFER, this._data.fg, gl.DYNAMIC_DRAW);
+        gl.bindBuffer(gl.ARRAY_BUFFER, this._buffers.bg);
+        gl.bufferData(gl.ARRAY_BUFFER, this._data.bg, gl.DYNAMIC_DRAW);
         gl.drawArrays(gl.TRIANGLES, 0, this._tileCount[0] * this._tileCount[1] * VERTICES_PER_TILE);
     }
     _uploadFont(pixels) {

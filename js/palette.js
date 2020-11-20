@@ -1,9 +1,9 @@
 export default class Palette {
-    constructor() {
+    constructor(size = 256) {
         this._length = 0;
         this._scene = null;
         let canvas = document.createElement("canvas");
-        canvas.width = 256;
+        canvas.width = size;
         canvas.height = 1;
         this._ctx = canvas.getContext("2d");
     }
@@ -12,8 +12,9 @@ export default class Palette {
     static xterm256() { return this.fromArray(XTERM_256); }
     static rexpaint() { return this.fromArray(REXPAINT); }
     static rexpaint8() { return this.fromArray(REXPAINT_8); }
+    static amiga() { return this.fromArray(AMIGA); }
     static fromArray(data) {
-        let p = new this();
+        let p = new this(data.length);
         data.forEach(c => p.add(c));
         return p;
     }
@@ -57,4 +58,11 @@ const REXPAINT_8 = REXPAINT.map((_, index, all) => {
     let set = index >> 3;
     set = (index < 96 ? 2 * set : (set - 12) * 2 + 1);
     return all[8 * set + remainder];
+});
+const AMIGA = new Array(4096).fill(0).map((_, i) => {
+    const r = (i % 16);
+    const g = (i >> 4) % 16;
+    const b = (i >> 8);
+    const color = [r * 17, g * 17, b * 17].join(',');
+    return `rgb(${color})`;
 });

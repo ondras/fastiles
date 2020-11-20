@@ -10,8 +10,9 @@ export default class Palette {
     static xterm256(): Palette;
     static rexpaint(): Palette;
     static rexpaint8(): Palette;
+    static amiga(): Palette;
     static fromArray(data: string[]): Palette;
-    constructor();
+    constructor(size?: number);
     set scene(scene: Scene | null);
     get length(): number;
     set(index: number, color: string): number;

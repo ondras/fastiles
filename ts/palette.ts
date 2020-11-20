@@ -15,14 +15,14 @@ export default class Palette {
 	static amiga() { return this.fromArray(AMIGA); }
 
 	static fromArray(data: string[]) {
-		let p = new this(data.length);
+		let p = new this();
 		data.forEach(c => p.add(c));
 		return p;
 	}
 
-	constructor(size: number=256) {
+	constructor() {
 		let canvas = document.createElement("canvas");
-		canvas.width = size;
+		canvas.width = 256;
 		canvas.height = 1;
 		this._ctx = canvas.getContext("2d") as CanvasRenderingContext2D;
 	}
@@ -38,13 +38,29 @@ export default class Palette {
 		const ctx = this._ctx;
 
 		ctx.fillStyle = color;
-		ctx.fillRect(index, 0, 1, 1);
+		ctx.fillRect(index % 256, index >> 8, 1, 1);
 
 		this._scene && this._scene.uploadPaletteData(ctx.canvas);
 		return index;
 	}
 
-	add(color: string) { return this.set(this._length++, color); }
+	add(color: string) { 
+		this._length++
+		if (this._length % 256 == 0) {
+			const canvas = this._ctx.canvas;
+			
+			const backCanvas = document.createElement('canvas');
+			backCanvas.width = canvas.width;
+			backCanvas.height = canvas.height;
+			const backCtx = backCanvas.getContext('2d') as CanvasRenderingContext2D;
+			backCtx.drawImage(canvas, 0,0);
+
+			canvas.height += 1;
+			this._ctx.drawImage(backCanvas, 0, 0);
+
+		}
+		return this.set(this._length, color); 
+	}
 
 	clear() {
 		const ctx = this._ctx;

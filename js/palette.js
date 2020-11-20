@@ -1,9 +1,9 @@
 export default class Palette {
-    constructor(size = 256) {
+    constructor() {
         this._length = 0;
         this._scene = null;
         let canvas = document.createElement("canvas");
-        canvas.width = size;
+        canvas.width = 256;
         canvas.height = 1;
         this._ctx = canvas.getContext("2d");
     }
@@ -14,7 +14,7 @@ export default class Palette {
     static rexpaint8() { return this.fromArray(REXPAINT_8); }
     static amiga() { return this.fromArray(AMIGA); }
     static fromArray(data) {
-        let p = new this(data.length);
+        let p = new this();
         data.forEach(c => p.add(c));
         return p;
     }
@@ -26,11 +26,24 @@ export default class Palette {
     set(index, color) {
         const ctx = this._ctx;
         ctx.fillStyle = color;
-        ctx.fillRect(index, 0, 1, 1);
+        ctx.fillRect(index % 256, index >> 8, 1, 1);
         this._scene && this._scene.uploadPaletteData(ctx.canvas);
         return index;
     }
-    add(color) { return this.set(this._length++, color); }
+    add(color) {
+        this._length++;
+        if (this._length % 256 == 0) {
+            const canvas = this._ctx.canvas;
+            const backCanvas = document.createElement('canvas');
+            backCanvas.width = canvas.width;
+            backCanvas.height = canvas.height;
+            const backCtx = backCanvas.getContext('2d');
+            backCtx.drawImage(canvas, 0, 0);
+            canvas.height += 1;
+            this._ctx.drawImage(backCanvas, 0, 0);
+        }
+        return this.set(this._length, color);
+    }
     clear() {
         const ctx = this._ctx;
         ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);

@@ -19,14 +19,14 @@ async function init() {
 
 	let glyphCount = (font.width/12) * (font.height/12);
 	
-	let tileCount = [80, 30];
+	let tileCount = [100, 38];
 	let s = new Scene({
 		tileSize: [12, 12],
 		tileCount,
 		font,
 	});
 
-	s.palette = Palette.xterm256();
+	s.palette = Palette.amiga();
 	document.body.appendChild(s.node);
 
 	window.s = s;

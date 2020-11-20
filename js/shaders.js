@@ -42,8 +42,8 @@ void main() {
 	uvec2 fontPx = (tileSize * fontPosition) + uvec2(vec2(tileSize) * fsUv);
 
 	vec3 texel = texelFetch(font, ivec2(fontPx), 0).rgb;
-	vec3 fg = texelFetch(palette, ivec2(fsStyle & uint(0xFFFF), 0), 0).rgb;
-	vec3 bg = texelFetch(palette, ivec2(fsStyle >> 16, 0), 0).rgb;
+	vec3 fg = texelFetch(palette, ivec2(fsStyle & uint(0xFF), (fsStyle >> 8) & uint(0xFF)), 0).rgb;
+	vec3 bg = texelFetch(palette, ivec2((fsStyle >> 16) & uint(0xFF), (fsStyle >> 24) & uint(0xFF)), 0).rgb;
 
 	fragColor = vec4(mix(bg, fg, texel), 1.0);
 }`.trim();

@@ -12,7 +12,7 @@ export default class Palette {
     static rexpaint8(): Palette;
     static amiga(): Palette;
     static fromArray(data: string[]): Palette;
-    constructor(size?: number);
+    constructor();
     set scene(scene: Scene | null);
     get length(): number;
     set(index: number, color: string): number;

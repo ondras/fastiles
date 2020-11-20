@@ -4,13 +4,11 @@ export const VS = `
 in uvec2 position;
 in uvec2 uv;
 in uint glyph;
-in uint fg;
-in uint bg;
+in uint style;
 
 out vec2 fsUv;
 flat out uint fsGlyph;
-flat out uint fsFg;
-flat out uint fsBg;
+flat out uint fsStyle;
 
 uniform highp uvec2 tileSize;
 uniform uvec2 viewportSize;
@@ -23,8 +21,7 @@ void main() {
 
 	fsUv = vec2(uv);
 	fsGlyph = glyph;
-	fsFg = fg;
-	fsBg = bg;
+	fsStyle = style;
 }`.trim()
 
 export const FS = `
@@ -33,8 +30,7 @@ precision highp float;
 
 in vec2 fsUv;
 flat in uint fsGlyph;
-flat in uint fsFg;
-flat in uint fsBg;
+flat in uint fsStyle;
 
 out vec4 fragColor;
 uniform sampler2D font;
@@ -47,8 +43,8 @@ void main() {
 	uvec2 fontPx = (tileSize * fontPosition) + uvec2(vec2(tileSize) * fsUv);
 
 	vec3 texel = texelFetch(font, ivec2(fontPx), 0).rgb;
-	vec3 fg = texelFetch(palette, ivec2(fsFg, 0), 0).rgb;
-	vec3 bg = texelFetch(palette, ivec2(fsBg, 0), 0).rgb;
+	vec3 fg = texelFetch(palette, ivec2(fsStyle & uint(0xFFFF), 0), 0).rgb;
+	vec3 bg = texelFetch(palette, ivec2(fsStyle >> 16, 0), 0).rgb;
 
 	fragColor = vec4(mix(bg, fg, texel), 1.0);
 }`.trim();

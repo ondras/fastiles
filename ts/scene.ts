@@ -19,15 +19,13 @@ export default class Scene {
 	private _palette!: Palette;
 	private _data = {
 		glyph: new Uint16Array(),
-		fg: new Uint16Array(),
-		bg: new Uint16Array()
+		style: new Uint32Array()
 	};
 	private _buffers: {
 		position?: WebGLBuffer;
 		uv?: WebGLBuffer;
 		glyph?: WebGLBuffer;
-		fg?: WebGLBuffer;
-		bg?: WebGLBuffer;
+		style?: WebGLBuffer;
 	} = {};
 	private _textures!: {
 		font: WebGLTexture;
@@ -85,10 +83,8 @@ export default class Scene {
 		this._data.glyph[index + 2] = glyph;
 		this._data.glyph[index + 5] = glyph;
 
-		this._data.fg[index+2] = fg;
-		this._data.fg[index+5] = fg;
-		this._data.bg[index+2] = bg;
-		this._data.bg[index+5] = bg;
+		this._data.style[index+2] = (bg << 16) + fg;
+		this._data.style[index+5] = (bg << 16) + fg;
 
 		this._requestDraw();
 	}
@@ -149,26 +145,20 @@ export default class Scene {
 		const attribs = this._attribs;
 
 		this._buffers.glyph && gl.deleteBuffer(this._buffers.glyph);
-		this._buffers.fg && gl.deleteBuffer(this._buffers.fg);
-		this._buffers.bg && gl.deleteBuffer(this._buffers.bg);
+		this._buffers.style && gl.deleteBuffer(this._buffers.style);
 
 		this._data.glyph = new Uint16Array(tileCount * VERTICES_PER_TILE);
-		this._data.fg = new Uint16Array(tileCount * VERTICES_PER_TILE);
-		this._data.bg = new Uint16Array(tileCount * VERTICES_PER_TILE);
-
+		this._data.style = new Uint32Array(tileCount * VERTICES_PER_TILE);
+		
 		const glyph = gl.createBuffer() as WebGLBuffer;
 		gl.bindBuffer(gl.ARRAY_BUFFER, glyph);
 		gl.vertexAttribIPointer(attribs["glyph"], 1, gl.UNSIGNED_SHORT, 0, 0);
 
-		const fg = gl.createBuffer() as WebGLBuffer;
-		gl.bindBuffer(gl.ARRAY_BUFFER, fg);
-		gl.vertexAttribIPointer(attribs["fg"], 1, gl.UNSIGNED_SHORT, 0, 0);
+		const style = gl.createBuffer() as WebGLBuffer;
+		gl.bindBuffer(gl.ARRAY_BUFFER, style);
+		gl.vertexAttribIPointer(attribs["style"], 1, gl.UNSIGNED_INT, 0, 0);
 
-		const bg = gl.createBuffer() as WebGLBuffer;
-		gl.bindBuffer(gl.ARRAY_BUFFER, bg);
-		gl.vertexAttribIPointer(attribs["bg"], 1, gl.UNSIGNED_SHORT, 0, 0);
-
-		Object.assign(this._buffers, {glyph, fg, bg});
+		Object.assign(this._buffers, {glyph, style});
 	}
 
 	private _requestDraw() {
@@ -185,11 +175,8 @@ export default class Scene {
 		gl.bindBuffer(gl.ARRAY_BUFFER, this._buffers.glyph!);
 		gl.bufferData(gl.ARRAY_BUFFER, this._data.glyph, gl.DYNAMIC_DRAW);
 
-		gl.bindBuffer(gl.ARRAY_BUFFER, this._buffers.fg!);
-		gl.bufferData(gl.ARRAY_BUFFER, this._data.fg, gl.DYNAMIC_DRAW);
-
-		gl.bindBuffer(gl.ARRAY_BUFFER, this._buffers.bg!);
-		gl.bufferData(gl.ARRAY_BUFFER, this._data.bg, gl.DYNAMIC_DRAW);
+		gl.bindBuffer(gl.ARRAY_BUFFER, this._buffers.style!);
+		gl.bufferData(gl.ARRAY_BUFFER, this._data.style, gl.DYNAMIC_DRAW);
 
 		gl.drawArrays(gl.TRIANGLES, 0, this._tileCount[0]*this._tileCount[1]*VERTICES_PER_TILE);
 	}

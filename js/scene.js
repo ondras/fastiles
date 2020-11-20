@@ -12,7 +12,6 @@ export default class Scene {
         this._attribs = {};
         this._uniforms = {};
         this._drawRequested = false;
-        this._externalRender = false;
         this._gl = this._initGL();
         this.configure(options);
         this.palette = palette;
@@ -21,7 +20,6 @@ export default class Scene {
     configure(options) {
         const gl = this._gl;
         const uniforms = this._uniforms;
-        this._externalRender = (options.render === false);
         if (options.tileCount || options.tileSize) { // resize
             const node = this.node;
             let tileSize = options.tileSize || [node.width / this._tileCount[0], node.height / this._tileCount[1]];
@@ -54,14 +52,14 @@ export default class Scene {
         this._data.glyph[index + 5] = glyph;
         this._data.style[index + 2] = (bg << 16) + fg;
         this._data.style[index + 5] = (bg << 16) + fg;
-        this._requestRender();
+        this._requestDraw();
     }
     uploadPaletteData(data) {
         const gl = this._gl;
         gl.activeTexture(gl.TEXTURE1);
         gl.bindTexture(gl.TEXTURE_2D, this._textures["palette"]);
         gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, data);
-        this._requestRender();
+        this._requestDraw();
     }
     _initGL() {
         let node = document.createElement("canvas");
@@ -112,20 +110,15 @@ export default class Scene {
         gl.vertexAttribIPointer(attribs["style"], 1, gl.UNSIGNED_INT, 0, 0);
         Object.assign(this._buffers, { glyph, style });
     }
-    _requestRender() {
+    _requestDraw() {
         if (this._drawRequested) {
             return;
         }
         this._drawRequested = true;
-        if (!this._externalRender) {
-            requestAnimationFrame(() => this.render());
-        }
+        requestAnimationFrame(() => this._draw());
     }
-    render() {
+    _draw() {
         const gl = this._gl;
-        if (!this._drawRequested) {
-            return false;
-        }
         this._drawRequested = false;
         gl.bindBuffer(gl.ARRAY_BUFFER, this._buffers.glyph);
         gl.bufferData(gl.ARRAY_BUFFER, this._data.glyph, gl.DYNAMIC_DRAW);
@@ -139,7 +132,7 @@ export default class Scene {
         gl.activeTexture(gl.TEXTURE0);
         gl.bindTexture(gl.TEXTURE_2D, this._textures["font"]);
         gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, pixels);
-        this._requestRender();
+        this._requestDraw();
     }
 }
 function createGeometry(gl, attribs, size) {

@@ -1,23 +1,23 @@
 import { createProgram, createTexture, QUAD } from "./utils.js";
 import * as shaders from "./shaders.js";
-import Palette from "./palette.js";
 const VERTICES_PER_TILE = 6;
 export default class Scene {
-    constructor(options, palette = Palette.default()) {
+    constructor(options) {
         this._data = {
             glyph: new Uint16Array(),
-            style: new Uint32Array()
+            style: new Uint16Array()
         };
         this._buffers = {};
         this._attribs = {};
         this._uniforms = {};
         this._drawRequested = false;
-        this._gl = this._initGL();
-        this.configure(options);
-        this.palette = palette;
+        this._configure(options);
     }
     get node() { return this._gl.canvas; }
-    configure(options) {
+    _configure(options) {
+        const palette = options.palette || this._palette;
+        const isLargePalette = (palette.maxLength > 256);
+        this._gl = this._initGL(isLargePalette, options.node);
         const gl = this._gl;
         const uniforms = this._uniforms;
         if (options.tileCount || options.tileSize) { // resize
@@ -32,19 +32,14 @@ export default class Scene {
         if (options.tileCount) { // re-create data buffers
             this._tileCount = options.tileCount;
             this._createGeometry(this._tileCount);
-            this._createData(this._tileCount[0] * this._tileCount[1]);
+            this._createData(this._tileCount[0] * this._tileCount[1], isLargePalette);
         }
         options.tileSize && gl.uniform2uiv(uniforms["tileSize"], options.tileSize);
         options.font && this._uploadFont(options.font);
-    }
-    get palette() { return this._palette; }
-    set palette(palette) {
-        if (this._palette) {
-            this._palette.scene = null;
-        }
         this._palette = palette;
         this._palette.scene = this;
     }
+    get palette() { return this._palette; }
     draw(position, glyph, fg, bg) {
         let index = position[1] * this._tileCount[0] + position[0];
         index *= VERTICES_PER_TILE;
@@ -61,13 +56,19 @@ export default class Scene {
         gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, data);
         this._requestDraw();
     }
-    _initGL() {
-        let node = document.createElement("canvas");
-        let gl = node.getContext("webgl2");
-        if (!gl) {
-            throw new Error("WebGL 2 not supported");
+    _initGL(isLargePalette = false, node) {
+        if (!this._gl) {
+            node = node || document.createElement("canvas");
+            this._gl = node.getContext("webgl2");
+            if (!this._gl) {
+                throw new Error("WebGL 2 not supported");
+            }
         }
-        const p = createProgram(gl, shaders.VS, shaders.FS);
+        const gl = this._gl;
+        if (this._program) {
+            this._gl.deleteProgram(this._program);
+        }
+        const p = this._program = createProgram(gl, shaders.VS(), shaders.FS(isLargePalette));
         gl.useProgram(p);
         const attributeCount = gl.getProgramParameter(p, gl.ACTIVE_ATTRIBUTES);
         for (let i = 0; i < attributeCount; i++) {
@@ -95,19 +96,21 @@ export default class Scene {
         let buffers = createGeometry(gl, this._attribs, size);
         Object.assign(this._buffers, buffers);
     }
-    _createData(tileCount) {
+    _createData(tileCount, isLargeStyle = false) {
         const gl = this._gl;
         const attribs = this._attribs;
         this._buffers.glyph && gl.deleteBuffer(this._buffers.glyph);
-        this._buffers.style && gl.deleteBuffer(this._buffers.style);
         this._data.glyph = new Uint16Array(tileCount * VERTICES_PER_TILE);
-        this._data.style = new Uint32Array(tileCount * VERTICES_PER_TILE);
         const glyph = gl.createBuffer();
         gl.bindBuffer(gl.ARRAY_BUFFER, glyph);
         gl.vertexAttribIPointer(attribs["glyph"], 1, gl.UNSIGNED_SHORT, 0, 0);
+        const aType = isLargeStyle ? Uint32Array : Uint16Array;
+        const gType = isLargeStyle ? gl.UNSIGNED_INT : gl.UNSIGNED_SHORT;
+        this._buffers.style && gl.deleteBuffer(this._buffers.style);
+        this._data.style = new aType(tileCount * VERTICES_PER_TILE);
         const style = gl.createBuffer();
         gl.bindBuffer(gl.ARRAY_BUFFER, style);
-        gl.vertexAttribIPointer(attribs["style"], 1, gl.UNSIGNED_INT, 0, 0);
+        gl.vertexAttribIPointer(attribs["style"], 1, gType, 0, 0);
         Object.assign(this._buffers, { glyph, style });
     }
     _requestDraw() {

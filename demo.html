@@ -24,9 +24,9 @@ async function init() {
 		tileSize: [12, 12],
 		tileCount,
 		font,
+		palette: Palette.xterm256()
 	});
 
-	s.palette = Palette.amiga();
 	document.body.appendChild(s.node);
 
 	window.s = s;

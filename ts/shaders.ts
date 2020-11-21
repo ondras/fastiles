@@ -1,5 +1,5 @@
-export const VS = `
-#version 300 es
+export function VS() {
+return `#version 300 es
 
 in uvec2 position;
 in uvec2 uv;
@@ -22,9 +22,18 @@ void main() {
 	fsUv = vec2(uv);
 	fsGlyph = glyph;
 	fsStyle = style;
-}`.trim()
+}`.trim();
+}
 
-export const FS = `
+
+export function FS(isLargePalette: boolean=false) {
+	
+	const large = ['fsStyle & uint(0xFF)', '(fsStyle >> 8) & uint(0xFF)', '(fsStyle >> 16) & uint(0xFF)', '(fsStyle >> 24) & uint(0xFF)'];
+	const small = ['fsStyle & uint(0xFF)', '0', '(fsStyle >> 8)', '0'];
+	
+	const data = isLargePalette ? large : small; 
+	
+	return `
 #version 300 es
 precision highp float;
 
@@ -43,8 +52,10 @@ void main() {
 	uvec2 fontPx = (tileSize * fontPosition) + uvec2(vec2(tileSize) * fsUv);
 
 	vec3 texel = texelFetch(font, ivec2(fontPx), 0).rgb;
-	vec3 fg = texelFetch(palette, ivec2(fsStyle & uint(0xFF), (fsStyle >> 8) & uint(0xFF)), 0).rgb;
-	vec3 bg = texelFetch(palette, ivec2((fsStyle >> 16) & uint(0xFF), (fsStyle >> 24) & uint(0xFF)), 0).rgb;
+	vec3 fg = texelFetch(palette, ivec2($FGX$, $FGY$), 0).rgb;
+	vec3 bg = texelFetch(palette, ivec2($BGX$, $BGY$), 0).rgb;
 
 	fragColor = vec4(mix(bg, fg, texel), 1.0);
-}`.trim();
+}`.replace('$FGX$', data[0]).replace('$FGY$', data[1]).replace('$BGX$', data[2]).replace('$BGY$', data[3]).trim();
+
+}

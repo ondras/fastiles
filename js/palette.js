@@ -1,11 +1,14 @@
 export default class Palette {
-    constructor() {
+    constructor(maxLength = 256) {
         this._length = 0;
+        this._maxLength = 0;
         this._scene = null;
         let canvas = document.createElement("canvas");
         canvas.width = 256;
-        canvas.height = 1;
+        canvas.height = ((maxLength - 1) >> 8) + 1;
         this._ctx = canvas.getContext("2d");
+        this._length = 0;
+        this._maxLength = maxLength;
     }
     static default() { return this.fromArray(["black", "white"]); }
     static windows16() { return this.fromArray(WINDOWS_16); }
@@ -14,7 +17,7 @@ export default class Palette {
     static rexpaint8() { return this.fromArray(REXPAINT_8); }
     static amiga() { return this.fromArray(AMIGA); }
     static fromArray(data) {
-        let p = new this();
+        let p = new this(data.length);
         data.forEach(c => p.add(c));
         return p;
     }
@@ -23,6 +26,7 @@ export default class Palette {
         scene && scene.uploadPaletteData(this._ctx.canvas);
     }
     get length() { return this._length; }
+    get maxLength() { return this._maxLength; }
     set(index, color) {
         const ctx = this._ctx;
         ctx.fillStyle = color;
@@ -31,18 +35,7 @@ export default class Palette {
         return index;
     }
     add(color) {
-        this._length++;
-        if (this._length % 256 == 0) {
-            const canvas = this._ctx.canvas;
-            const backCanvas = document.createElement('canvas');
-            backCanvas.width = canvas.width;
-            backCanvas.height = canvas.height;
-            const backCtx = backCanvas.getContext('2d');
-            backCtx.drawImage(canvas, 0, 0);
-            canvas.height += 1;
-            this._ctx.drawImage(backCanvas, 0, 0);
-        }
-        return this.set(this._length, color);
+        return this.set(this._length++, color);
     }
     clear() {
         const ctx = this._ctx;

@@ -5,6 +5,7 @@ interface Scene {
 export default class Palette {
 	private _ctx: CanvasRenderingContext2D;
 	private _length: number = 0;
+	private _maxLength: number = 0;
 	private _scene: Scene | null = null;
 
 	static default() { return this.fromArray(["black", "white"]); }
@@ -15,16 +16,18 @@ export default class Palette {
 	static amiga() { return this.fromArray(AMIGA); }
 
 	static fromArray(data: string[]) {
-		let p = new this();
+		let p = new this(data.length);
 		data.forEach(c => p.add(c));
 		return p;
 	}
 
-	constructor() {
+	constructor(maxLength: number=256) {
 		let canvas = document.createElement("canvas");
 		canvas.width = 256;
-		canvas.height = 1;
+		canvas.height = ((maxLength-1) >> 8) + 1;
 		this._ctx = canvas.getContext("2d") as CanvasRenderingContext2D;
+		this._length = 0;
+		this._maxLength = maxLength;
 	}
 
 	set scene(scene: Scene | null) {
@@ -33,6 +36,7 @@ export default class Palette {
 	}
 
 	get length() { return this._length; }
+	get maxLength() { return this._maxLength; }
 
 	set(index: number, color: string) {
 		const ctx = this._ctx;
@@ -45,21 +49,7 @@ export default class Palette {
 	}
 
 	add(color: string) { 
-		this._length++
-		if (this._length % 256 == 0) {
-			const canvas = this._ctx.canvas;
-			
-			const backCanvas = document.createElement('canvas');
-			backCanvas.width = canvas.width;
-			backCanvas.height = canvas.height;
-			const backCtx = backCanvas.getContext('2d') as CanvasRenderingContext2D;
-			backCtx.drawImage(canvas, 0,0);
-
-			canvas.height += 1;
-			this._ctx.drawImage(backCanvas, 0, 0);
-
-		}
-		return this.set(this._length, color); 
+		return this.set(this._length++, color); 
 	}
 
 	clear() {

@@ -1,2 +1,2 @@
-export declare const VS: string;
-export declare const FS: string;
+export declare function VS(): string;
+export declare function FS(isLargePalette?: boolean): string;

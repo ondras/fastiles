@@ -24,8 +24,7 @@ async function init() {
 		tileSize: [12, 12],
 		tileCount,
 		font,
-		palette: Palette.xterm256()
-	});
+	}, Palette.xterm256());
 
 	document.body.appendChild(s.node);
 
@@ -37,10 +36,14 @@ async function init() {
 	let count = 0;
 	function draw() {
 		if (++count == 50) {
-			s.configure({ tileCount: [50, 24], palette: Palette.amiga() });
-			console.log('amiga, 50x24', s._data.style instanceof Uint16Array ? '16 bit' : '32 bit');
+			s.palette = Palette.amiga();
+			console.log('amiga', s._data.style instanceof Uint16Array ? '16 bit' : '32 bit');
 		}
 		else if (count == 100) {
+			s.configure({ tileCount: [50, 24] });
+			console.log('50x24', s._data.style instanceof Uint16Array ? '16 bit' : '32 bit');
+		}
+		else if (count == 150) {
 			s.palette = Palette.windows16();
 			console.log('windows16', s._data.style instanceof Uint16Array ? '16 bit' : '32 bit');
 		}

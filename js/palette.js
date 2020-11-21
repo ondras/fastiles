@@ -37,9 +37,7 @@ export default class Palette {
         this._scene && this._scene.uploadPaletteData(ctx.canvas);
         return index;
     }
-    add(color) {
-        return this.set(this._length++, color);
-    }
+    add(color) { return this.set(this._length++, color); }
     clear() {
         const ctx = this._ctx;
         ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);

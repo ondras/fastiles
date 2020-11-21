@@ -4,8 +4,6 @@ export interface Options {
     tileCount: Vec2;
     tileSize: Vec2;
     font: TexImageSource;
-    palette: Palette;
-    node?: HTMLCanvasElement;
 }
 export default class Scene {
     private _gl;
@@ -19,11 +17,12 @@ export default class Scene {
     private _attribs;
     private _uniforms;
     private _drawRequested;
-    constructor(options: Options);
+    constructor(options: Options, palette?: Palette);
     get node(): HTMLCanvasElement;
     configure(options: Partial<Options>): void;
+    private _configure;
     get palette(): Palette;
-    set palette(value: Palette);
+    set palette(palette: Palette);
     draw(position: Vec2, glyph: number, fg: number, bg: number): void;
     uploadPaletteData(data: HTMLCanvasElement): void;
     private _initGL;

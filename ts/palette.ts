@@ -54,9 +54,7 @@ export default class Palette {
 		return index;
 	}
 
-	add(color: string) { 
-		return this.set(this._length++, color); 
-	}
+	add(color: string) { return this.set(this._length++, color); }
 
 	clear() {
 		const ctx = this._ctx;

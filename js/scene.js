@@ -1,8 +1,9 @@
 import { createProgram, createTexture, QUAD } from "./utils.js";
 import * as shaders from "./shaders.js";
+import Palette from "./palette.js";
 const VERTICES_PER_TILE = 6;
 export default class Scene {
-    constructor(options) {
+    constructor(options, palette = Palette.default()) {
         this._data = {
             glyph: new Uint16Array(),
             style: new Uint16Array()
@@ -11,15 +12,15 @@ export default class Scene {
         this._attribs = {};
         this._uniforms = {};
         this._drawRequested = false;
-        this.configure(options);
+        this._configure(options, palette);
     }
     get node() { return this._gl.canvas; }
-    configure(options) {
-        const rebuild = ((!this._gl) || (options.palette && (options.palette.isLarge != this._palette.isLarge)));
-        const palette = options.palette || this._palette;
+    configure(options) { this._configure(options, this._palette); }
+    _configure(options, palette) {
+        const rebuild = ((!this._gl) || (palette.isLarge != this._palette.isLarge));
         this._palette = palette;
         if (rebuild) {
-            this._gl = this._initGL(options.node);
+            this._gl = this._initGL();
         }
         const gl = this._gl;
         const uniforms = this._uniforms;
@@ -39,13 +40,13 @@ export default class Scene {
             gl.uniform2uiv(uniforms["tileSize"], tileSize);
         }
         options.font && this._uploadFont(options.font);
-        if (rebuild || options.palette) {
+        if (rebuild) {
             this._createData(this._tileCount[0] * this._tileCount[1]);
         }
         this._palette.scene = this;
     }
     get palette() { return this._palette; }
-    set palette(value) { this.configure({ palette: value }); }
+    set palette(palette) { this._configure({}, palette); }
     draw(position, glyph, fg, bg) {
         let index = position[1] * this._tileCount[0] + position[0];
         index *= VERTICES_PER_TILE;
@@ -62,9 +63,9 @@ export default class Scene {
         gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, data);
         this._requestDraw();
     }
-    _initGL(node) {
+    _initGL() {
         if (!this._gl) {
-            node = node || document.createElement("canvas");
+            const node = document.createElement("canvas");
             this._gl = node.getContext("webgl2");
             if (!this._gl) {
                 throw new Error("WebGL 2 not supported");

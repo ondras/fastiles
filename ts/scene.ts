@@ -11,8 +11,6 @@ export interface Options {
 	tileCount: Vec2;
 	tileSize: Vec2;
 	font: TexImageSource;
-	palette: Palette;
-	node?: HTMLCanvasElement;
 }
 
 interface Data {
@@ -44,19 +42,20 @@ export default class Scene {
 	private _uniforms: Record<string, WebGLUniformLocation> = {};
 	private _drawRequested: boolean = false;
 
-	constructor(options: Options) {
-		this.configure(options);
+	constructor(options: Options, palette = Palette.default()) {
+		this._configure(options, palette);
 	}
 
 	get node() { return this._gl.canvas as HTMLCanvasElement; }
 
-	configure(options: Partial<Options>) {
-		const rebuild = ((!this._gl) || (options.palette && (options.palette.isLarge != this._palette.isLarge)));
-		const palette = options.palette || this._palette;
+	configure(options: Partial<Options>) { this._configure(options, this._palette); }
+
+	private _configure(options: Partial<Options>, palette: Palette) {
+		const rebuild = ((!this._gl) || (palette.isLarge != this._palette.isLarge));
 		this._palette = palette;
 
 		if (rebuild) {
-			this._gl = this._initGL(options.node);
+			this._gl = this._initGL();
 		}
 		const gl = this._gl;
 		const uniforms = this._uniforms;
@@ -82,7 +81,7 @@ export default class Scene {
 		}
 		options.font && this._uploadFont(options.font);
 
-		if (rebuild || options.palette) {
+		if (rebuild) {
 			this._createData(this._tileCount[0]*this._tileCount[1]);
 		}
 		
@@ -90,7 +89,7 @@ export default class Scene {
 	}
 
 	get palette() { return this._palette; }
-	set palette(value: Palette) { this.configure({ palette: value }); }
+	set palette(palette: Palette) { this._configure({}, palette); }
 
 	draw(position: Vec2, glyph: number, fg: number, bg: number) {
 		let index = position[1] * this._tileCount[0] + position[0];
@@ -114,9 +113,9 @@ export default class Scene {
 		this._requestDraw();
 	}
 
-	private _initGL(node?: HTMLCanvasElement) {
+	private _initGL() {
 		if (!this._gl) {
-			node = node || document.createElement("canvas");
+			const node = document.createElement("canvas");
 			this._gl = node.getContext("webgl2") as GL;
 			if (!this._gl) { throw new Error("WebGL 2 not supported"); }
 		}

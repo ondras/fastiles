@@ -24,12 +24,14 @@ export default class Palette {
 	}
 
 	constructor(maxLength: number=256) {
+		if (maxLength > 65535) { throw new Error("Maximum palette size is 65535."); }
+
 		let canvas = document.createElement("canvas");
 		canvas.width = 256;
 		canvas.height = ((maxLength-1) >> 8) + 1;
 		this._ctx = canvas.getContext("2d") as CanvasRenderingContext2D;
 		this._length = 0;
-		this._maxLength = maxLength;
+		this._maxLength = canvas.height * 256;
 	}
 
 	set scene(scene: Scene | null) {

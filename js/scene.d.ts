@@ -11,6 +11,7 @@ export default class Scene {
     private _gl;
     private _program;
     private _tileCount;
+    private _tileSize;
     private _palette;
     private _data;
     private _buffers;
@@ -20,8 +21,9 @@ export default class Scene {
     private _drawRequested;
     constructor(options: Options);
     get node(): HTMLCanvasElement;
-    private _configure;
+    configure(options: Partial<Options>): void;
     get palette(): Palette;
+    set palette(value: Palette);
     draw(position: Vec2, glyph: number, fg: number, bg: number): void;
     uploadPaletteData(data: HTMLCanvasElement): void;
     private _initGL;

@@ -33,7 +33,17 @@ async function init() {
 	window.Scene = Scene;
 	window.Palette = Palette;
 
+	console.log('xterm256, 100x38', s._data.style instanceof Uint16Array ? '16 bit' : '32 bit');
+	let count = 0;
 	function draw() {
+		if (++count == 50) {
+			s.configure({ tileCount: [50, 24], palette: Palette.amiga() });
+			console.log('amiga, 50x24', s._data.style instanceof Uint16Array ? '16 bit' : '32 bit');
+		}
+		else if (count == 100) {
+			s.palette = Palette.windows16();
+			console.log('windows16', s._data.style instanceof Uint16Array ? '16 bit' : '32 bit');
+		}
 		let i, j;
 		for (j=0;j<tileCount[1];j++) {
 			for (i=0;i<tileCount[0];i++) {

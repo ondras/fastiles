@@ -27,6 +27,9 @@ export default class Palette {
     }
     get length() { return this._length; }
     get maxLength() { return this._maxLength; }
+    get isLarge() { return this._maxLength > 256; }
+    arrayType() { return (this.isLarge) ? Uint32Array : Uint16Array; }
+    glType(gl) { return (this.isLarge) ? gl.UNSIGNED_INT : gl.UNSIGNED_SHORT; }
     set(index, color) {
         const ctx = this._ctx;
         ctx.fillStyle = color;

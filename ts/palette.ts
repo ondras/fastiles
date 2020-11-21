@@ -2,6 +2,8 @@ interface Scene {
 	uploadPaletteData: (data: HTMLCanvasElement) => void
 }
 
+type GL = WebGL2RenderingContext;
+
 export default class Palette {
 	private _ctx: CanvasRenderingContext2D;
 	private _length: number = 0;
@@ -37,6 +39,10 @@ export default class Palette {
 
 	get length() { return this._length; }
 	get maxLength() { return this._maxLength; }
+	get isLarge() { return this._maxLength > 256; }
+
+	arrayType() { return (this.isLarge) ? Uint32Array : Uint16Array; }
+	glType(gl: GL) { return (this.isLarge) ? gl.UNSIGNED_INT : gl.UNSIGNED_SHORT; }
 
 	set(index: number, color: string) {
 		const ctx = this._ctx;

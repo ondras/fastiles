@@ -11,35 +11,41 @@ export default class Scene {
         this._attribs = {};
         this._uniforms = {};
         this._drawRequested = false;
-        this._configure(options);
+        this.configure(options);
     }
     get node() { return this._gl.canvas; }
-    _configure(options) {
+    configure(options) {
+        const rebuild = ((!this._gl) || (options.palette && (options.palette.isLarge != this._palette.isLarge)));
         const palette = options.palette || this._palette;
-        const isLargePalette = (palette.maxLength > 256);
-        this._gl = this._initGL(isLargePalette, options.node);
+        this._palette = palette;
+        if (rebuild) {
+            this._gl = this._initGL(options.node);
+        }
         const gl = this._gl;
         const uniforms = this._uniforms;
-        if (options.tileCount || options.tileSize) { // resize
-            const node = this.node;
-            let tileSize = options.tileSize || [node.width / this._tileCount[0], node.height / this._tileCount[1]];
-            let tileCount = options.tileCount || this._tileCount;
+        const node = this.node;
+        const tileCount = this._tileCount = options.tileCount || this._tileCount;
+        const tileSize = this._tileSize = options.tileSize || this._tileSize || [node.width / tileCount[0], node.height / tileCount[1]];
+        // Update Viewport
+        if (rebuild || options.tileCount) {
             node.width = tileCount[0] * tileSize[0];
             node.height = tileCount[1] * tileSize[1];
             gl.viewport(0, 0, node.width, node.height);
             gl.uniform2ui(uniforms["viewportSize"], node.width, node.height);
+            // Create data buffers
+            this._createGeometry(tileCount);
         }
-        if (options.tileCount) { // re-create data buffers
-            this._tileCount = options.tileCount;
-            this._createGeometry(this._tileCount);
-            this._createData(this._tileCount[0] * this._tileCount[1], isLargePalette);
+        if (rebuild || options.tileSize) {
+            gl.uniform2uiv(uniforms["tileSize"], tileSize);
         }
-        options.tileSize && gl.uniform2uiv(uniforms["tileSize"], options.tileSize);
         options.font && this._uploadFont(options.font);
-        this._palette = palette;
+        if (rebuild || options.palette) {
+            this._createData(this._tileCount[0] * this._tileCount[1]);
+        }
         this._palette.scene = this;
     }
     get palette() { return this._palette; }
+    set palette(value) { this.configure({ palette: value }); }
     draw(position, glyph, fg, bg) {
         let index = position[1] * this._tileCount[0] + position[0];
         index *= VERTICES_PER_TILE;
@@ -56,7 +62,7 @@ export default class Scene {
         gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, data);
         this._requestDraw();
     }
-    _initGL(isLargePalette = false, node) {
+    _initGL(node) {
         if (!this._gl) {
             node = node || document.createElement("canvas");
             this._gl = node.getContext("webgl2");
@@ -68,7 +74,7 @@ export default class Scene {
         if (this._program) {
             this._gl.deleteProgram(this._program);
         }
-        const p = this._program = createProgram(gl, shaders.VS(), shaders.FS(isLargePalette));
+        const p = this._program = createProgram(gl, shaders.VS(), shaders.FS(this._palette.isLarge));
         gl.useProgram(p);
         const attributeCount = gl.getProgramParameter(p, gl.ACTIVE_ATTRIBUTES);
         for (let i = 0; i < attributeCount; i++) {
@@ -83,7 +89,7 @@ export default class Scene {
         }
         gl.uniform1i(this._uniforms["font"], 0);
         gl.uniform1i(this._uniforms["palette"], 1);
-        this._textures = {
+        this._textures = this._textures || {
             font: createTexture(gl),
             palette: createTexture(gl)
         };
@@ -96,7 +102,7 @@ export default class Scene {
         let buffers = createGeometry(gl, this._attribs, size);
         Object.assign(this._buffers, buffers);
     }
-    _createData(tileCount, isLargeStyle = false) {
+    _createData(tileCount) {
         const gl = this._gl;
         const attribs = this._attribs;
         this._buffers.glyph && gl.deleteBuffer(this._buffers.glyph);
@@ -104,8 +110,8 @@ export default class Scene {
         const glyph = gl.createBuffer();
         gl.bindBuffer(gl.ARRAY_BUFFER, glyph);
         gl.vertexAttribIPointer(attribs["glyph"], 1, gl.UNSIGNED_SHORT, 0, 0);
-        const aType = isLargeStyle ? Uint32Array : Uint16Array;
-        const gType = isLargeStyle ? gl.UNSIGNED_INT : gl.UNSIGNED_SHORT;
+        const aType = this._palette.arrayType();
+        const gType = this._palette.glType(gl);
         this._buffers.style && gl.deleteBuffer(this._buffers.style);
         this._data.style = new aType(tileCount * VERTICES_PER_TILE);
         const style = gl.createBuffer();

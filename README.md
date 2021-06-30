@@ -1,6 +1,6 @@
 # fastiles
 
-Library for rendering colorized bitmap fonts. Very fast, suitable for applications where the whole scene needs frequent redrawing.
+Library for rendering colorized bitmap fonts. Very fast, suitable for applications where the whole scene needs frequent redrawing. Open source, released un the MIT license.
 
 ## Features
 

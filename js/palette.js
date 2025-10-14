@@ -22,6 +22,13 @@ export default class Palette {
         scene && scene.uploadPaletteData(this._ctx.canvas);
     }
     get length() { return this._length; }
+    updateClearColor(gl, index) {
+        const ctx = this._ctx;
+        let imageData = ctx.getImageData(0, 0, ctx.canvas.width, ctx.canvas.height);
+        let o = index * 4;
+        let { data } = imageData;
+        gl.clearColor(data[o + 0] / 255, data[o + 1] / 255, data[o + 2] / 255, data[o + 3] / 255);
+    }
     set(index, color) {
         const ctx = this._ctx;
         ctx.fillStyle = color;

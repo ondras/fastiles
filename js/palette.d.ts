@@ -14,6 +14,7 @@ export default class Palette {
     constructor();
     set scene(scene: Scene | null);
     get length(): number;
+    updateClearColor(gl: WebGL2RenderingContext, index: number): void;
     set(index: number, color: string): number;
     add(color: string): number;
     clear(): void;

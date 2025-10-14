@@ -1,6 +1,6 @@
 {
   "name": "fastiles",
-  "version": "2.1.0",
+  "version": "2.1.1",
   "main": "js/fastiles.js",
   "devDependencies": {
     "typescript": "^4.0.3"

@@ -33,6 +33,14 @@ export default class Palette {
 
 	get length() { return this._length; }
 
+	updateClearColor(gl: WebGL2RenderingContext, index: number) {
+		const ctx = this._ctx;
+		let imageData = ctx.getImageData(0, 0, ctx.canvas.width, ctx.canvas.height);
+		let o = index*4;
+		let { data } = imageData;
+		gl.clearColor(data[o+0]/255, data[o+1]/255, data[o+2]/255, data[o+3]/255);
+	}
+
 	set(index: number, color: string) {
 		const ctx = this._ctx;
 

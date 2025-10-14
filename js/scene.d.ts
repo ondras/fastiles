@@ -21,6 +21,7 @@ export default class Scene {
     get palette(): Palette;
     set palette(palette: Palette);
     draw(position: Vec2, glyph: number, fg: number, bg: number): void;
+    clear(bg?: number): void;
     uploadPaletteData(data: HTMLCanvasElement): void;
     private _initGL;
     private _createGeometry;

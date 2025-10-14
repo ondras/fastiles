@@ -23,12 +23,11 @@ async function init() {
 		tileCount,
 		font
 	});
-
-	s.palette = Palette.xterm256();
+	s.palette = Palette.windows16();
 	document.body.appendChild(s.node);
 	for (let j=0;j<tileCount[1];j++) {
 		for (let i=0;i<tileCount[0];i++) {
-			s.draw([i, j], j*16+i, j*16+i, 0);
+			s.draw([i, j], j*16+i, 0, 1);
 		}
 	}
 

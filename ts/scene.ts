@@ -90,6 +90,12 @@ export default class Scene {
 		this._requestDraw();
 	}
 
+	clear(bg=0) {
+		const gl = this._gl;
+		this._palette.updateClearColor(gl, bg);
+		gl.clear(gl.COLOR_BUFFER_BIT);
+	}
+
 	uploadPaletteData(data: HTMLCanvasElement) {
 		const gl = this._gl;
 		gl.activeTexture(gl.TEXTURE1);
